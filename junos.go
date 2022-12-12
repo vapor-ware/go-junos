@@ -223,6 +223,15 @@ func NewSessionWithConfig(host string, clientConfig *ssh.ClientConfig) (*Junos, 
 	return NewSessionFromNetconf(s)
 }
 
+// NewSessionFromLocal establishes a new connection to a Junos device via the Junos local shell NETCONF interface.
+func NewSessionFromLocal() (*Junos, error) {
+	s, err := netconf.DialJunos()
+	if err != nil {
+
+	}
+	return NewSessionFromNetconf(s)
+}
+
 // NewSessionFromNetConn uses an existing net.Conn to establish a netconf.Session
 //
 // This is especially useful if you need to customize the SSH connection beyond
