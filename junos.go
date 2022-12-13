@@ -33,12 +33,15 @@ var (
 	rpcConfigFileSet       = "<load-configuration action=\"set\" format=\"text\"><configuration-set>%s</configuration-set></load-configuration>"
 	rpcConfigFileText      = "<load-configuration format=\"text\"><configuration-text>%s</configuration-text></load-configuration>"
 	rpcConfigFileXML       = "<load-configuration format=\"xml\"><configuration>%s</configuration></load-configuration>"
+	rpcConfigFileJSON      = "<load-configuration format=\"json\"><configuration>%s</configuration></load-configuration>"
 	rpcConfigURLSet        = "<load-configuration action=\"set\" format=\"text\" url=\"%s\"/>"
 	rpcConfigURLText       = "<load-configuration format=\"text\" url=\"%s\"/>"
+	rpcConfigURLJSON       = "<load-configuration format=\"json\" url=\"%s\"/>"
 	rpcConfigURLXML        = "<load-configuration format=\"xml\" url=\"%s\"/>"
 	rpcConfigStringSet     = "<load-configuration action=\"set\" format=\"text\"><configuration-set>%s</configuration-set></load-configuration>"
 	rpcConfigStringText    = "<load-configuration action=\"replace\" format=\"text\"><configuration-text>%s</configuration-text></load-configuration>"
 	rpcConfigStringXML     = "<load-configuration format=\"xml\"><configuration>%s</configuration></load-configuration>"
+	rpcConfigStringJSON    = "<load-configuration format=\"json\"><configuration>%s</configuration></load-configuration>"
 	rpcGetRescue           = "<get-rescue-information><format>text</format></get-rescue-information>"
 	rpcGetRollback         = "<get-rollback-information><rollback>%d</rollback><format>text</format></get-rollback-information>"
 	rpcGetRollbackCompare  = "<get-rollback-information><rollback>0</rollback><compare>%d</compare><format>text</format></get-rollback-information>"
@@ -640,6 +643,26 @@ func (j *Junos) GetConfig(format string, section ...string) (string, error) {
 func (j *Junos) Config(path interface{}, format string, commit bool) error {
 	var command string
 	switch format {
+	case "json":
+		switch path.(type) {
+		case string:
+			if strings.Contains(path.(string), "tp://") {
+				command = fmt.Sprintf(rpcConfigURLJSON, path.(string))
+			}
+
+			if _, err := ioutil.ReadFile(path.(string)); err != nil {
+				command = fmt.Sprintf(rpcConfigStringJSON, path.(string))
+			} else {
+				data, err := ioutil.ReadFile(path.(string))
+				if err != nil {
+					return err
+				}
+
+				command = fmt.Sprintf(rpcConfigFileJSON, string(data))
+			}
+		case []string:
+			command = fmt.Sprintf(rpcConfigStringJSON, strings.Join(path.([]string), "\n"))
+		}
 	case "set":
 		switch path.(type) {
 		case string:
