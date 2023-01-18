@@ -51,6 +51,7 @@ var (
 	rpcRescueConfig        = "<load-configuration rescue=\"rescue\"/>"
 	rpcRescueDelete        = "<request-delete-rescue-configuration/>"
 	rpcRescueSave          = "<request-save-rescue-configuration/>"
+	rpcRequestEndSession   = "<request-end-session/>"
 	rpcRollbackConfig      = "<load-configuration rollback=\"%d\"/>"
 	rpcRoute               = "<get-route-engine-information/>"
 	rpcSoftware            = "<get-software-information/>"
@@ -230,7 +231,7 @@ func NewSessionWithConfig(host string, clientConfig *ssh.ClientConfig) (*Junos, 
 func NewSessionFromLocal() (*Junos, error) {
 	s, err := netconf.DialJunos()
 	if err != nil {
-
+		return nil, err
 	}
 	return NewSessionFromNetconf(s)
 }
@@ -835,6 +836,22 @@ func (j *Junos) Unlock() error {
 
 	if j.CommitTimeout > 0 {
 		time.Sleep(j.CommitTimeout * time.Second)
+	}
+
+	return nil
+}
+
+// EndSession will end the current NETCONF session.
+func (j *Junos) EndSession() error {
+	reply, err := j.Session.Exec(netconf.RawMethod(rpcRequestEndSession))
+	if err != nil {
+		return err
+	}
+
+	if reply.Errors != nil {
+		for _, m := range reply.Errors {
+			return errors.New(m.Message)
+		}
 	}
 
 	return nil
